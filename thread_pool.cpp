@@ -17,7 +17,7 @@ thread_pool::thread_pool(std::size_t n) {
       m_vThreads.emplace_back([this, i]() {
          std::size_t nIdx = i % m_nNumQueues;
          while (!m_bDone.load(std::memory_order_acquire)) {
-            auto& slot = m_vQueues[nIdx];
+            auto& slot = m_vQueues.at(nIdx);
             if (!slot.empty()) {
                if (auto& mutex = m_vQueueMutexes.at(nIdx); mutex.try_lock()) {
                   {
@@ -31,9 +31,9 @@ thread_pool::thread_pool(std::size_t n) {
 #ifdef STATISTICS
                         if (m_nNumQueues == NUM_THREADS) {
                            if (nIdx == i)
-                              ++m_vOwnThreadFetch[i];
+                              ++m_vOwnThreadFetch.at(i);
                            else
-                              ++m_vOtherThreadFetch[i];
+                              ++m_vOtherThreadFetch.at(i);
                         }
 #endif
                       }
@@ -62,11 +62,13 @@ thread_pool::~thread_pool() {
       std::cout << "Stats:\n\n";
       std::size_t nIdx{};
       for (; nIdx < m_vOwnThreadFetch.size(); ++nIdx) {
-         std::cout << "Thread " << nIdx << ": " << m_vOwnThreadFetch[nIdx] << "/" << m_vOtherThreadFetch[nIdx] << " fetched from own queue\n";
-         nTotalTasks += m_vOwnThreadFetch[nIdx];
-         nTotalTasks += m_vOtherThreadFetch[nIdx];
+         const auto nOwn = m_vOwnThreadFetch.at(nIdx);
+         const auto nOther = m_vOtherThreadFetch.at(nIdx);
+         std::cout << "Thread " << nIdx << ": " << nOwn << "/" << nOther  << "(" << static_cast<float>(nOwn) / static_cast<float>(nOther + nOwn) * 100.0f <<  "%) fetched from own queue\n";
+         nTotalTasks += nOwn;
+         nTotalTasks += nOther;
       }
-      std::cout << "\nTptal tasks processed: " << nTotalTasks << "\n";
+      std::cout << "\nTotal tasks processed: " << nTotalTasks << "\n";
    }
 #endif
 }

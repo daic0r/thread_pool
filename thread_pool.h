@@ -63,7 +63,7 @@ private:
             {
                std::lock_guard guard{ m, std::adopt_lock };
 
-               m_vQueues[nIdx].push_front(std::forward<Task>(task));
+               m_vQueues.at(nIdx).emplace_front(std::forward<Task>(task));
             }
             nIdx = (nIdx + 1) % m_nNumQueues;
 
