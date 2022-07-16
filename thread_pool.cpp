@@ -1,15 +1,16 @@
 #include "thread_pool.h"
 #include <atomic>
 
-thread_pool::thread_pool() {
-   for (std::size_t i{}; i < NUM_THREADS; ++i)
+thread_pool::thread_pool(std::size_t n) {
+   m_nNumQueues = n == 0 ? NUM_THREADS : n;
+   for (std::size_t i{}; i < m_nNumQueues; ++i)
       m_vQueueMutexes.emplace_back();
 
-   m_vQueues.resize(NUM_THREADS);
+   m_vQueues.resize(m_nNumQueues);
 
    for (std::size_t i{}; i < NUM_THREADS; ++i) {
       m_vThreads.push_back(std::thread{ [this, i]() {
-         std::size_t nIdx = i;
+         std::size_t nIdx = i % m_nNumQueues;
          while (!m_bDone.load(std::memory_order_acquire)) {
             auto& slot = m_vQueues[nIdx];
             if (!slot.empty()) {
@@ -28,7 +29,7 @@ thread_pool::thread_pool() {
                }
             }
 
-            nIdx = (nIdx + 1) % NUM_THREADS;
+            nIdx = (nIdx + 1) % m_nNumQueues;
          }
       } });
    }

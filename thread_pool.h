@@ -21,9 +21,10 @@ class thread_pool {
    std::deque<std::mutex> m_vQueueMutexes;
    std::vector<std::thread> m_vThreads;
    std::atomic<bool> m_bDone{ false };
+   std::size_t m_nNumQueues{ NUM_THREADS };
 
 public:
-   thread_pool();
+   thread_pool(std::size_t n = 0);
    thread_pool(const thread_pool&) = delete;
    thread_pool& operator=(const thread_pool&) = delete;
    thread_pool(thread_pool&&) = delete;
@@ -61,7 +62,7 @@ private:
 
             break;
          }
-         nIdx = (nIdx + 1) % NUM_THREADS;
+         nIdx = (nIdx + 1) % m_nNumQueues;
       }
    }
 };

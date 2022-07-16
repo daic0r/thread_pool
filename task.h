@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 class task {
    class concept_interface;
@@ -21,14 +22,8 @@ public:
       return *this;
    }
 
-   task(task&& rhs) noexcept {
-      m_pContained = std::exchange(rhs.m_pContained, nullptr);
-   }
-   task& operator=(task&& rhs) noexcept {
-      task copy{ std::move(rhs) };
-      swap(copy);
-      return *this;
-   }
+   task(task&& rhs) noexcept = default;
+   task& operator=(task&& rhs) noexcept = default;
    ~task() = default;
 
 
