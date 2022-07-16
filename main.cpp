@@ -18,9 +18,6 @@ int main() {
       std::cout << f.get() << " ";
    }
 
-   pool.shutDown();
-
    std::cout << "\n\nDone\n";
-
 
 }

@@ -9,7 +9,6 @@ thread_pool::thread_pool() {
 
    for (std::size_t i{}; i < NUM_THREADS; ++i) {
       m_vThreads.push_back(std::thread{ [this, i]() {
-         std::cout << "Started thread " << i << std::endl;
          std::size_t nIdx = i;
          while (!m_bDone.load(std::memory_order_acquire)) {
             auto& slot = m_vQueues[nIdx];
@@ -35,7 +34,7 @@ thread_pool::thread_pool() {
    }
 }
 
-void thread_pool::shutDown() {
+thread_pool::~thread_pool() {
    m_bDone.store(true, std::memory_order_release);
 
    for (auto& t : m_vThreads)

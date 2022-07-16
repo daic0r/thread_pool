@@ -24,6 +24,11 @@ class thread_pool {
 
 public:
    thread_pool();
+   thread_pool(const thread_pool&) = delete;
+   thread_pool& operator=(const thread_pool&) = delete;
+   thread_pool(thread_pool&&) = delete;
+   thread_pool& operator=(thread_pool&&) = delete;
+   ~thread_pool();
 
    template<typename Func>
    auto async(Func&& f) -> std::future<decltype(f())> {
@@ -43,8 +48,6 @@ public:
       return future;
    }
 
-   void shutDown();
-
 private:
    template<typename Task>
    void _queue(Task&& task) {
@@ -60,8 +63,7 @@ private:
          }
          nIdx = (nIdx + 1) % NUM_THREADS;
       }
-    }
-   
+   }
 };
 
 #endif
