@@ -2,6 +2,7 @@
 #define TASK_H
 
 #include <memory>
+#include <type_traits>
 
 class task {
    class concept_interface;
@@ -32,6 +33,7 @@ public:
 
 
    void operator()() { (*m_pContained)(); }
+   bool is_contained_object_copyable() const noexcept { return m_pContained->is_copyable(); }
 
 private:
    class concept_interface {
@@ -39,6 +41,7 @@ private:
       virtual ~concept_interface() = default;
       virtual std::unique_ptr<concept_interface> clone() const = 0;
       virtual void operator()() = 0;
+      virtual bool is_copyable() const noexcept = 0;
    };
 
    template<typename Callable>
@@ -46,8 +49,14 @@ private:
    public:
       template<typename U = Callable>
       concept_impl(U&& callable) : m_callable{ std::forward<U>(callable) } {}
-      std::unique_ptr<concept_interface> clone() const override { return std::make_unique<concept_impl>(m_callable); }
       void operator()() override { m_callable(); }
+      bool is_copyable() const noexcept override { return std::is_copy_constructible_v<Callable>; }
+      std::unique_ptr<concept_interface> clone() const override { 
+         if constexpr (std::is_copy_constructible_v<Callable>)
+            return std::make_unique<concept_impl>(m_callable);
+         else
+            throw std::runtime_error("Callable is not copy-constructible!");
+      }
 
    private:
       Callable m_callable;

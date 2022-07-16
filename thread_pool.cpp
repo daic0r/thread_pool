@@ -11,7 +11,7 @@ thread_pool::thread_pool() {
       m_vThreads.push_back(std::thread{ [this, i]() {
          std::cout << "Started thread " << i << std::endl;
          std::size_t nIdx = i;
-         while (!m_done.load(std::memory_order_acquire)) {
+         while (!m_bDone.load(std::memory_order_acquire)) {
             auto& slot = m_vQueues[nIdx];
             if (!slot.empty()) {
                if (auto& mutex = m_vQueueMutexes[nIdx]; mutex.try_lock()) {
@@ -31,13 +31,12 @@ thread_pool::thread_pool() {
 
             nIdx = (nIdx + 1) % NUM_THREADS;
          }
-         std::cout << "Got DONE signal\n";
       } });
    }
 }
 
 void thread_pool::shutDown() {
-   m_done.store(true, std::memory_order_release);
+   m_bDone.store(true, std::memory_order_release);
 
    for (auto& t : m_vThreads)
       t.join();
