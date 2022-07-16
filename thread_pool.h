@@ -59,12 +59,12 @@ private:
    void _queue(Task&& task) {
       static std::size_t nIdx{};
       while (true) {
-         auto& m = m_vQueueMutexes[nIdx];
-         if (m.try_lock()) {
-            std::lock_guard guard{ m, std::adopt_lock };
+         if (auto& m = m_vQueueMutexes.at(nIdx); m.try_lock()) {
+            {
+               std::lock_guard guard{ m, std::adopt_lock };
 
-            m_vQueues[nIdx].push_front(std::forward<Task>(task));
-
+               m_vQueues[nIdx].push_front(std::forward<Task>(task));
+            }
             nIdx = (nIdx + 1) % m_nNumQueues;
 
             break;

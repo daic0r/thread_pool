@@ -37,7 +37,7 @@ BENCHMARK_DEFINE_F(MyBenchmark, AccumulateTest)(benchmark::State& state) {
    }
 }
 
-BENCHMARK_REGISTER_F(MyBenchmark, AccumulateTest)->Threads(1)->Arg(1); //; 
+BENCHMARK_REGISTER_F(MyBenchmark, AccumulateTest)->Threads(1)->Arg(1)->Arg(8); //; 
 
 BENCHMARK_MAIN();
 
