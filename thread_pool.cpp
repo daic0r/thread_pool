@@ -8,6 +8,11 @@ thread_pool::thread_pool(std::size_t n) {
 
    m_vQueues.resize(m_nNumQueues);
 
+#ifdef STATISTICS
+   m_vOwnThreadFetch.resize(m_nNumQueues);
+   m_vOtherThreadFetch.resize(m_nNumQueues);
+#endif
+
    for (std::size_t i{}; i < NUM_THREADS; ++i) {
       m_vThreads.push_back(std::thread{ [this, i]() {
          std::size_t nIdx = i % m_nNumQueues;
@@ -22,6 +27,14 @@ thread_pool::thread_pool(std::size_t n) {
                      slot.pop_back();
                      task();
 
+#ifdef STATISTICS
+                     if (m_nNumQueues == NUM_THREADS) {
+                        if (nIdx == i)
+                           ++m_vOwnThreadFetch[i];
+                        else
+                           ++m_vOtherThreadFetch[i];
+                     }
+#endif
                      nIdx = i;
 
                      continue;
@@ -40,4 +53,18 @@ thread_pool::~thread_pool() {
 
    for (auto& t : m_vThreads)
       t.join();
+
+#ifdef STATISTICS
+   std::size_t nTotalTasks{};
+   if (m_nNumQueues == NUM_THREADS) {
+      std::cout << "Stats:\n\n";
+      std::size_t nIdx{};
+      for (; nIdx < m_vOwnThreadFetch.size(); ++nIdx) {
+         std::cout << "Thread " << nIdx << ": " << m_vOwnThreadFetch[nIdx] << "/" << m_vOtherThreadFetch[nIdx] << " fetched from own queue\n";
+         nTotalTasks += m_vOwnThreadFetch[nIdx];
+         nTotalTasks += m_vOtherThreadFetch[nIdx];
+      }
+      std::cout << "\nTptal tasks processed: " << nTotalTasks << "\n";
+   }
+#endif
 }

@@ -23,6 +23,11 @@ class thread_pool {
    std::atomic<bool> m_bDone{ false };
    std::size_t m_nNumQueues{ NUM_THREADS };
 
+#ifdef STATISTICS
+   // statistics
+   std::vector<std::size_t> m_vOwnThreadFetch, m_vOtherThreadFetch;
+#endif
+
 public:
    thread_pool(std::size_t n = 0);
    thread_pool(const thread_pool&) = delete;
@@ -52,13 +57,15 @@ public:
 private:
    template<typename Task>
    void _queue(Task&& task) {
-      std::size_t nIdx{};
+      static std::size_t nIdx{};
       while (true) {
          auto& m = m_vQueueMutexes[nIdx];
          if (m.try_lock()) {
             std::lock_guard guard{ m, std::adopt_lock };
 
             m_vQueues[nIdx].push_front(std::forward<Task>(task));
+
+            nIdx = (nIdx + 1) % m_nNumQueues;
 
             break;
          }

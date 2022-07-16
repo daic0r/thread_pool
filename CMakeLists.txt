@@ -12,3 +12,4 @@ find_package(benchmark REQUIRED)
 add_executable(${PROJECT_NAME} thread_pool.cpp main.cpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads PRIVATE benchmark::benchmark)
+target_compile_definitions(${PROJECT_NAME} PRIVATE STATISTICS)
