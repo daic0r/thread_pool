@@ -14,37 +14,39 @@ thread_pool::thread_pool(std::size_t n) {
 #endif
 
    for (std::size_t i{}; i < NUM_THREADS; ++i) {
-      m_vThreads.push_back(std::thread{ [this, i]() {
+      m_vThreads.emplace_back([this, i]() {
          std::size_t nIdx = i % m_nNumQueues;
          while (!m_bDone.load(std::memory_order_acquire)) {
             auto& slot = m_vQueues[nIdx];
             if (!slot.empty()) {
-               if (auto& mutex = m_vQueueMutexes[nIdx]; mutex.try_lock()) {
-                  std::lock_guard guard{ mutex, std::adopt_lock };
+               if (auto& mutex = m_vQueueMutexes.at(nIdx); mutex.try_lock()) {
+                  {
+                     std::lock_guard guard{ mutex, std::adopt_lock };
 
-                  if (!slot.empty()) {
-                     auto task = std::move(slot.back());
-                     slot.pop_back();
-                     task();
+                     if (!slot.empty()) {
+                        auto task = std::move(slot.back());
+                        slot.pop_back();
+                        task();
 
 #ifdef STATISTICS
-                     if (m_nNumQueues == NUM_THREADS) {
-                        if (nIdx == i)
-                           ++m_vOwnThreadFetch[i];
-                        else
-                           ++m_vOtherThreadFetch[i];
-                     }
+                        if (m_nNumQueues == NUM_THREADS) {
+                           if (nIdx == i)
+                              ++m_vOwnThreadFetch[i];
+                           else
+                              ++m_vOtherThreadFetch[i];
+                        }
 #endif
-                     nIdx = i;
-
-                     continue;
+                      }
                   }
+                  nIdx = i % m_nNumQueues;
+
+                  continue;
                }
             }
 
             nIdx = (nIdx + 1) % m_nNumQueues;
          }
-      } });
+      });
    }
 }
 
