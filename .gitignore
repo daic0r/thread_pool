@@ -1,0 +1,7 @@
+build/
+CMakeFiles/
+*.swp
+*.cmake
+CMakeCache.txt
+Makefile
+*.vim
